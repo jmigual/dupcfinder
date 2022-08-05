@@ -1,6 +1,9 @@
 execute_process(COMMAND git rev-parse --abbrev-ref HEAD
-                OUTPUT_VARIABLE GIT_BRANCH)
+                OUTPUT_VARIABLE GIT_BRANCH
+                RESULT_VARIABLE GIT_OUTPUT
+                ERROR_QUIET)
 
+if (GIT_OUTPUT EQUAL 0)
 execute_process(COMMAND git rev-list HEAD --count
                 OUTPUT_VARIABLE GIT_COUNT
                 ERROR_QUIET)
@@ -23,6 +26,14 @@ set(VERSION
 
 const char* const VERSION = \"${GIT_BRANCH}-${GIT_COUNT}-${GIT_REV} Commited at ${GIT_DATE}\";
 ")
+else()
+message("Version set from project version")
+set(VERSION 
+"#include \"versioning.hpp\"
+
+const char* const VERSION = \"${PROJECT_VERSION}\";
+")
+endif()
 
 if(EXISTS ${VERSION_FILE_NAME})
     file(READ ${VERSION_FILE_NAME} VERSION_)

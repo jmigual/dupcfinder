@@ -22,7 +22,7 @@ find_package(OpenSSL REQUIRED COMPONENTS Crypto)
 # Create version file
 set(VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/versioning.cpp")
 add_custom_target(Version ALL
-    COMMAND "${CMAKE_COMMAND}" -DVERSION_FILE_NAME="${VERSION_FILE}" -P "${PROJECT_SOURCE_DIR}/config/revision.cmake"
+    COMMAND "${CMAKE_COMMAND}" -DVERSION_FILE_NAME="${VERSION_FILE}" -DPROJECT_VERSION="${PROJECT_VERSION}" -P "${PROJECT_SOURCE_DIR}/config/revision.cmake"
     BYPRODUCTS "${VERSION_FILE}"
 )
 
