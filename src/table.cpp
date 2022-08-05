@@ -1,7 +1,9 @@
 #include "table.hpp"
 
+#include <execution>
+#include <fmt/compile.h>
 #include <fmt/ostream.h>
-#include <libs/sha512.hpp>
+#include <fstream>
 #include <libs/tqdm.hpp>
 
 static const std::size_t kMaxReadSize = 1024;
@@ -9,9 +11,10 @@ static const std::size_t kMaxReadSize = 1024;
 std::vector<std::tuple<std::string, std::filesystem::path>>
 dupcfinder::DuplicateTable::getDuplicates() const {
     std::vector<std::tuple<std::string, std::filesystem::path>> duplicates;
-    for (const auto &[hash, paths] : duplicatesHash) {
+    for (const auto &[hash, paths] : m_duplicatesHash) {
         for (const auto &path : paths) {
-            duplicates.emplace_back(hash, path);
+            // Convert bytes to hex string
+            duplicates.emplace_back(fmt::format("{:02x}", fmt::join(hash, "")), path);
         }
     }
     return duplicates;
@@ -25,30 +28,30 @@ void dupcfinder::DuplicateTable::find() {
 
 void dupcfinder::DuplicateTable::findDuplicatesSize() {
     fmt::print(std::cerr, "Finding duplicates by size...\n");
-    for (const auto &path : searchPaths) {
+    for (const auto &path : m_searchPaths) {
         for (const auto &entry : std::filesystem::recursive_directory_iterator(path)) {
             if (entry.is_regular_file()) {
                 auto size = entry.file_size();
-                duplicatesSize[size].emplace_back(entry.path());
+                m_duplicatesSize[size].emplace_back(entry.path());
             }
         }
     }
 
     // Filter out entries with 1 element
-    for (auto it = duplicatesSize.begin(); it != duplicatesSize.end();) {
+    for (auto it = m_duplicatesSize.begin(); it != m_duplicatesSize.end();) {
         if (it->second.size() == 1) {
-            it = duplicatesSize.erase(it);
+            it = m_duplicatesSize.erase(it);
         } else {
             ++it;
         }
     }
 
-    fmt::print(std::cerr, "Found {} possible duplicates\n", duplicatesSize.size());
+    fmt::print(std::cerr, "Found {} possible duplicates\n", m_duplicatesSize.size());
 }
 
 void dupcfinder::DuplicateTable::findDuplicatesFirst1024() {
     fmt::print(std::cerr, "Finding duplicates by first 1024 bytes...\n");
-    auto bar = tq::tqdm(duplicatesSize);
+    auto bar = tq::tqdm(m_duplicatesSize);
     bar.set_prefix("Filtering ");
     for (const auto &[size, paths] : bar) {
         for (const auto &path : paths) {
@@ -56,41 +59,57 @@ void dupcfinder::DuplicateTable::findDuplicatesFirst1024() {
             std::string first1024;
             first1024.resize(kMaxReadSize);
             file.read(first1024.data(), kMaxReadSize);
-            duplicatesFirst1024[sw::sha512::calculate(first1024)].emplace_back(path);
+            m_duplicatesFirst1024[dupcfinder::hash(first1024)].emplace_back(path);
+            file.close();
         }
     }
 
     // Remove entries with 1 element
-    for (auto it = duplicatesFirst1024.begin(); it != duplicatesFirst1024.end();) {
+    for (auto it = m_duplicatesFirst1024.begin(); it != m_duplicatesFirst1024.end();) {
         if (it->second.size() == 1) {
-            it = duplicatesFirst1024.erase(it);
+            it = m_duplicatesFirst1024.erase(it);
         } else {
             ++it;
         }
     }
 
-    fmt::print(std::cerr, "Found {} possible duplicates\n", duplicatesFirst1024.size());
+    fmt::print(std::cerr, "\nFound {} possible duplicates\n", m_duplicatesFirst1024.size());
 }
 
 void dupcfinder::DuplicateTable::findDuplicatesHash() {
-    fmt::print(std::cerr, "Finding duplicates by hash...\n");
-    auto bar = tq::tqdm(duplicatesFirst1024);
-    bar.set_prefix("Filtering ");
-    for (const auto &[first1024, paths] : bar) {
+    fmt::print(std::cerr, "Finding duplicates by hashes...\n");
+
+    std::vector<std::filesystem::path> pathsToDo;
+    for (const auto &[first1024, paths] : m_duplicatesFirst1024) {
         for (const auto &path : paths) {
-            auto hash = sw::sha512::file(path.string());
-            duplicatesHash[hash].emplace_back(path);
+            pathsToDo.emplace_back(path);
         }
     }
 
+    auto bar = tq::tqdm(pathsToDo);
+    bar.set_prefix("Filtering ");
+    auto iter = bar.begin();
+
+    std::for_each(std::execution::par_unseq,
+                  pathsToDo.begin(),
+                  pathsToDo.end(),
+                  [this, &iter, &bar](const auto &path) {
+                      auto hash = dupcfinder::hash(path);
+                      m_mutex.lock();
+                      m_duplicatesHash[hash].emplace_back(path);
+                      ++iter;
+                      bar.update();
+                      m_mutex.unlock();
+                  });
+
     // Remove entries with 1 element
-    for (auto it = duplicatesHash.begin(); it != duplicatesHash.end();) {
+    for (auto it = m_duplicatesHash.begin(); it != m_duplicatesHash.end();) {
         if (it->second.size() == 1) {
-            it = duplicatesHash.erase(it);
+            it = m_duplicatesHash.erase(it);
         } else {
             ++it;
         }
     }
 
-    fmt::print(std::cerr, "Found {} duplicates\n", duplicatesHash.size());
+    fmt::print(std::cerr, "\nFound {} duplicates\n", m_duplicatesHash.size());
 }
