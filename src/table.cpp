@@ -1,16 +1,17 @@
 #include "table.hpp"
 
-#include "libs/sha512.hpp"
-
 #include <fmt/ostream.h>
+#include <libs/sha512.hpp>
+#include <libs/tqdm.hpp>
 
 static const std::size_t kMaxReadSize = 1024;
 
-std::vector<std::filesystem::path> dupcfinder::DuplicateTable::getDuplicates() const {
-    std::vector<std::filesystem::path> duplicates;
-    for (const auto &[size, paths] : duplicatesHash) {
-        if (paths.size() > 1) {
-            duplicates.insert(duplicates.end(), paths.begin(), paths.end());
+std::vector<std::tuple<std::string, std::filesystem::path>>
+dupcfinder::DuplicateTable::getDuplicates() const {
+    std::vector<std::tuple<std::string, std::filesystem::path>> duplicates;
+    for (const auto &[hash, paths] : duplicatesHash) {
+        for (const auto &path : paths) {
+            duplicates.emplace_back(hash, path);
         }
     }
     return duplicates;
@@ -41,11 +42,15 @@ void dupcfinder::DuplicateTable::findDuplicatesSize() {
             ++it;
         }
     }
+
+    fmt::print(std::cerr, "Found {} possible duplicates\n", duplicatesSize.size());
 }
 
 void dupcfinder::DuplicateTable::findDuplicatesFirst1024() {
     fmt::print(std::cerr, "Finding duplicates by first 1024 bytes...\n");
-    for (const auto &[size, paths] : duplicatesSize) {
+    auto bar = tq::tqdm(duplicatesSize);
+    bar.set_prefix("Filtering ");
+    for (const auto &[size, paths] : bar) {
         for (const auto &path : paths) {
             std::ifstream file(path, std::ios::binary | std::ios::in);
             std::string first1024;
@@ -63,11 +68,15 @@ void dupcfinder::DuplicateTable::findDuplicatesFirst1024() {
             ++it;
         }
     }
+
+    fmt::print(std::cerr, "Found {} possible duplicates\n", duplicatesFirst1024.size());
 }
 
 void dupcfinder::DuplicateTable::findDuplicatesHash() {
     fmt::print(std::cerr, "Finding duplicates by hash...\n");
-    for (const auto &[first1024, paths] : duplicatesFirst1024) {
+    auto bar = tq::tqdm(duplicatesFirst1024);
+    bar.set_prefix("Filtering ");
+    for (const auto &[first1024, paths] : bar) {
         for (const auto &path : paths) {
             auto hash = sw::sha512::file(path.string());
             duplicatesHash[hash].emplace_back(path);
@@ -82,4 +91,6 @@ void dupcfinder::DuplicateTable::findDuplicatesHash() {
             ++it;
         }
     }
+
+    fmt::print(std::cerr, "Found {} duplicates\n", duplicatesHash.size());
 }

@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
     table.find();
     auto duplicates = table.getDuplicates();
 
-    for (const auto &path : duplicates) {
-        fmt::print("{}\n", path.string());
+    for (const auto &[hash, path] : duplicates) {
+        fmt::print("{},{}\n", hash, path.string());
     }
 }

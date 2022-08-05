@@ -68,37 +68,6 @@
                 "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_C_COMPILER": "gcc"
             }
-        },
-        {
-            "name": "tools",
-            "displayName": "tools",
-            "description": "Compile with tools (requires Qt)",
-            "binaryDir": "${sourceDir}/build/tools",
-            "inherits": "default",
-            "cacheVariables": {
-                "BUILD_TOOLS": true
-            }
-        },
-        {
-            "name": "tools-MSVC",
-            "displayName": "tools (MSVC)",
-            "description": "Compile with tools (requires Qt) using MSVC",
-            "inherits": ["tools", "MSVC"],
-            "binaryDir": "${sourceDir}/build/msvc-tools"
-        },
-        {
-            "name": "tools-clang",
-            "displayName": "tools (clang)",
-            "description": "Compile with tools (requires Qt) using clang",
-            "inherits": ["tools", "clang"],
-            "binaryDir": "${sourceDir}/build/clang-tools"
-        },
-        {
-            "name": "tools-GCC",
-            "displayName": "tools (GCC)",
-            "description": "Compile with tools (requires Qt) using GCC",
-            "inherits": ["tools", "GCC"],
-            "binaryDir": "${sourceDir}/build/gcc-tools"
         }
     ],
     "buildPresets": [
@@ -196,90 +165,6 @@
                 "app",
                 "fms-test_coverage"
             ]
-        },
-        {
-            "name": "tools-debug",
-            "displayName": "Debug (Tools)",
-            "description": "Build with debug information and tools",
-            "configurePreset": "tools",
-            "configuration": "Debug"
-        },
-        {
-            "name": "tools-release",
-            "displayName": "Release (Tools)",
-            "description": "Optimized build with tools",
-            "configurePreset": "tools",
-            "configuration": "Release"
-        },
-        {
-            "name": "tools-RelWithDebInfo",
-            "displayName": "RelWithDebInfo (Tools)",
-            "description": "Optimized build with debug information and tools",
-            "configurePreset": "tools",
-            "configuration": "RelWithDebInfo"
-        },
-        {
-            "name": "tools-MSVC-debug",
-            "displayName": "Debug (MSVC: Tools)",
-            "description": "Build with debug information and tools using MSVC",
-            "configurePreset": "tools-MSVC",
-            "configuration": "Debug"
-        },
-        {
-            "name": "tools-MSVC-release",
-            "displayName": "Release (MSVC: Tools)",
-            "description": "Optimized build with tools using MSVC",
-            "configurePreset": "tools-MSVC",
-            "configuration": "Release"
-        },
-        {
-            "name": "tools-MSVC-RelWithDebInfo",
-            "displayName": "RelWithDebInfo (MSVC: Tools)",
-            "description": "Optimized build with debug information and tools using MSVC",
-            "configurePreset": "tools-MSVC",
-            "configuration": "RelWithDebInfo"
-        },
-        {
-            "name": "tools-clang-debug",
-            "displayName": "Debug (Clang: Tools)",
-            "description": "Build with debug information and tools using clang",
-            "configurePreset": "tools-clang",
-            "configuration": "Debug"
-        },
-        {
-            "name": "tools-clang-release",
-            "displayName": "Release (Clang: Tools)",
-            "description": "Optimized build with tools using clang",
-            "configurePreset": "tools-clang",
-            "configuration": "Release"
-        },
-        {
-            "name": "tools-clang-RelWithDebInfo",
-            "displayName": "RelWithDebInfo (Clang: Tools)",
-            "description": "Optimized build with debug information and tools using clang",
-            "configurePreset": "tools-clang",
-            "configuration": "RelWithDebInfo"
-        },
-        {
-            "name": "tools-GCC-debug",
-            "displayName": "Debug (GCC: Tools)",
-            "description": "Build with debug information and tools using GCC",
-            "configurePreset": "tools-GCC",
-            "configuration": "Debug"
-        },
-        {
-            "name": "tools-GCC-release",
-            "displayName": "Release (GCC: Tools)",
-            "description": "Optimized build with tools using GCC",
-            "configurePreset": "tools-GCC",
-            "configuration": "Release"
-        },
-        {
-            "name": "tools-GCC-RelWithDebInfo",
-            "displayName": "RelWithDebInfo (GCC: Tools)",
-            "description": "Optimized build with debug information and tools using GCC",
-            "configurePreset": "tools-GCC",
-            "configuration": "RelWithDebInfo"
         }
     ]
 }

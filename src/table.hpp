@@ -30,8 +30,11 @@ public:
     explicit DuplicateTable(std::vector<std::filesystem::path> searchPaths) :
         searchPaths(std::move(searchPaths)) {}
 
+    /// @brief Start the search for duplicates
     void find();
-    [[nodiscard]] std::vector<std::filesystem::path> getDuplicates() const;
+
+    /// @brief Get the duplicates found
+    [[nodiscard]] std::vector<std::tuple<std::string, std::filesystem::path>> getDuplicates() const;
 
 private:
     void findDuplicatesSize();
