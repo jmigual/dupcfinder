@@ -1,6 +1,7 @@
 #include "sha.hpp"
 
 #include <fstream>
+#include <vector>
 
 constexpr std::size_t kMaxReadSize = 1024 * 1024;
 
